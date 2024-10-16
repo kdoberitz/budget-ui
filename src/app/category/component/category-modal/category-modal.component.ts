@@ -9,6 +9,8 @@ import {
   IonIcon,
   IonInput,
   IonItem,
+  IonLabel,
+  IonList,
   IonTitle,
   IonToolbar,
   ModalController
@@ -35,7 +37,9 @@ import { close, save, text, trash } from 'ionicons/icons';
     IonItem,
     IonInput,
     IonFab,
-    IonFabButton
+    IonFabButton,
+    IonLabel,
+    IonList
   ]
 })
 export default class CategoryModalComponent {
