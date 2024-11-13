@@ -1,0 +1,16 @@
+<ion-content>
+  <ion-grid style="height: 100%">
+    <ion-row style="height: 100%" class="ion-align-items-center">
+      <ion-col class="ion-text-center">
+        <h1>Please Log In</h1>
+        @for (loginProvider of loginProviders; track loginProvider.name) {
+          <ion-button color="dark" fill="outline" (click)="login(loginProvider)" style="width: 235px">
+            <ion-icon slot="start" size="large" [name]="loginProvider.logo" />
+            Login with {{ loginProvider.name }}
+          </ion-button>
+          <br />
+        }
+      </ion-col>
+    </ion-row>
+  </ion-grid>
+</ion-content>

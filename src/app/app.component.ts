@@ -1,4 +1,4 @@
-import { Component } from '@angular/core';
+import { Component, inject } from '@angular/core';
 import { addIcons } from 'ionicons';
 import { analytics, logOut, podium, pricetag } from 'ionicons/icons';
 import { categoriesPath } from './category/category.routes';
@@ -25,6 +25,7 @@ import {
   IonSplitPane,
   IonToolbar
 } from '@ionic/angular/standalone';
+import { AuthService } from './shared/service/auth.service';
 
 @Component({
   selector: 'app-root',
@@ -58,11 +59,12 @@ import {
   ]
 })
 export default class AppComponent {
+  // DI
+  readonly authService = inject(AuthService);
   readonly appPages = [
     { title: 'Expenses', url: `/${expensesPath}`, icon: 'podium' },
     { title: 'Categories', url: `/${categoriesPath}`, icon: 'pricetag' }
   ];
-
   constructor() {
     // Add all used Ionic icons
     addIcons({ analytics, logOut, podium, pricetag });
