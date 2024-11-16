@@ -14,8 +14,8 @@
 
     <!-- Save Button -->
     <ion-buttons slot="end">
-      <ion-button (click)="save()">
-        <ion-icon slot="start" name="save" />
+      <ion-button (click)="save()" [disabled]="categoryForm.pristine || categoryForm.invalid">
+        <ion-icon slot="start" name="save"/>
         Save
       </ion-button>
     </ion-buttons>
@@ -23,11 +23,11 @@
 </ion-header>
 
 <!-------------Content------------->
-<ion-content class="ion-padding">
+<ion-content class="ion-padding" [formGroup]="categoryForm">
   <!-- Input -->
   <ion-item>
     <ion-icon name="text" slot="start" />
-    <ion-input maxlength="40" placeholder="Name" required="true" />
+    <ion-input #nameInput formControlName="name" maxlength="40" placeholder="Name" required="true"/>
   </ion-item>
 
 <!-- Delete Button -->
