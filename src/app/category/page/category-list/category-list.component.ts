@@ -88,11 +88,8 @@ export default class CategoryListComponent implements ViewDidEnter {
     addIcons({ swapVertical, search, alertCircleOutline, add });
   }
 
-  async openModal(): Promise<void> {
-    const modal = await this.modalCtrl.create({ component: CategoryModalComponent });
-    modal.present();
-    const { role } = await modal.onWillDismiss();
-    console.log('role', role);
+  ionViewDidEnter(): void {
+    this.loadCategories();
   }
 
   private loadCategories(next?: () => void): void {
@@ -116,8 +113,11 @@ export default class CategoryListComponent implements ViewDidEnter {
       });
   }
 
-  ionViewDidEnter(): void {
-    this.loadCategories();
+  async openModal(): Promise<void> {
+    const modal = await this.modalCtrl.create({ component: CategoryModalComponent });
+    modal.present();
+    const { role } = await modal.onWillDismiss();
+    if (role === 'refresh') this.reloadCategories();
   }
 
   loadNextCategoryPage($event: InfiniteScrollCustomEvent) {
@@ -128,12 +128,5 @@ export default class CategoryListComponent implements ViewDidEnter {
   reloadCategories($event?: RefresherCustomEvent): void {
     this.searchCriteria.page = 0;
     this.loadCategories(() => $event?.target.complete());
-  }
-
-  async openModal(): Promise<void> {
-    const modal = await this.modalCtrl.create({ component: CategoryModalComponent });
-    modal.present();
-    const { role } = await modal.onWillDismiss();
-    if (role === 'refresh') this.reloadCategories();
   }
 }

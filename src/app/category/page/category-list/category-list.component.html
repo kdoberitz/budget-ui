@@ -72,7 +72,7 @@
           <!-- Categories -->
           @default {
             @for (category of categories; track category.id) {
-              <ion-item button="true" [detail]="true" (click)="openModal(category)">
+              <ion-item button="true" [detail]="true" (click)="openModal()">
                 <ion-label> {{ category.name }} </ion-label>
               </ion-item>
             }
