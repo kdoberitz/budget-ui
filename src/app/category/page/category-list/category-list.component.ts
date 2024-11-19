@@ -93,6 +93,8 @@ export default class CategoryListComponent implements ViewDidEnter, ViewDidLeave
     { label: 'Name (Z-A)', value: 'name,desc' }
   ];
 
+  readonly searchForm = this.formBuilder.group({ name: [''], sort: [this.initialSort] });
+
   constructor() {
     // Add all used Ionic icons
     addIcons({ swapVertical, search, alertCircleOutline, add });
@@ -134,8 +136,11 @@ export default class CategoryListComponent implements ViewDidEnter, ViewDidLeave
       });
   }
 
-  async openModal(): Promise<void> {
-    const modal = await this.modalCtrl.create({ component: CategoryModalComponent });
+  async openModal(category?: Category): Promise<void> {
+    const modal = await this.modalCtrl.create({
+      component: CategoryModalComponent,
+      componentProps: { category: category ?? {} }
+    });
     modal.present();
     const { role } = await modal.onWillDismiss();
     if (role === 'refresh') this.reloadCategories();
@@ -150,6 +155,4 @@ export default class CategoryListComponent implements ViewDidEnter, ViewDidLeave
     this.searchCriteria.page = 0;
     this.loadCategories(() => $event?.target.complete());
   }
-
-  readonly searchForm = this.formBuilder.group({ name: [''], sort: [this.initialSort] });
 }
