@@ -14,7 +14,7 @@
 
     <!-- Save Button -->
     <ion-buttons slot="end">
-      <ion-button color="medium" (click)="save()">
+      <ion-button (click)="save()" [disabled]="expenseForm.pristine || expenseForm.invalid">
         <ion-icon slot="start" name="save"/>
         Save
       </ion-button>
@@ -23,31 +23,30 @@
 </ion-header>
 
 <!-------------Content------------->
-<ion-content class="ion-padding">
+<ion-content class="ion-padding" [formGroup]="expenseForm">
   <!-- Input Name-->
   <ion-item>
     <ion-icon name="text" slot="start" />
-    <ion-input #nameInput maxlength="40" placeholder="Name" required="true"/>
+    <ion-input #nameInput formControlName="name" maxlength="40" placeholder="Name" required="true"/>
   </ion-item>
   <!-- Choose Category-->
-  <ion-item [button]="true">
+  <ion-item>
     <ion-icon name="pricetag" slot="start" />
-    <ion-select interface="popover" placeholder="Category">
-      <ion-select-option>Auswärts Essen</ion-select-option>
-      <ion-select-option>Brötchen</ion-select-option>
-      <ion-select-option>Ferien</ion-select-option>
-      <ion-select-option>Freizeit</ion-select-option>
-      <ion-select-option>Hobby</ion-select-option>
-      <ion-select-option>Lebensmittel</ion-select-option>
+    <ion-select interface="popover" placeholder="Category" formControlName="categoryID">
+      @for (category of categories; track category.id) {
+        <ion-select-option [value]="category.id">
+          {{ category.name }}
+        </ion-select-option>
+      }
     </ion-select>
-    <ion-button>
+    <ion-button (click)="showCategoryModal()">
       <ion-icon name="add"/>
     </ion-button>
   </ion-item>
   <!-- Input amount-->
   <ion-item>
     <ion-icon name="cash" slot="start"/>
-    <ion-input type="number" placeholder="Amount"/>
+    <ion-input type="number" placeholder="Amount" formControlName="amount" step="0.01" inputmode="decimal" />
     <ion-label/>
     <ion-note slot="end">CHF</ion-note>
   </ion-item>
@@ -57,7 +56,7 @@
     <ion-datetime-button datetime="date"></ion-datetime-button>
     <ion-modal [keepContentsMounted]="true">
       <ng-template>
-        <ion-datetime id="date" presentation="date" [showDefaultButtons]="true">
+        <ion-datetime id="date" presentation="date" [showDefaultButtons]="true" formControlName="date">
           <span slot="title">Enter the date of the expense</span>
         </ion-datetime>
       </ng-template>
