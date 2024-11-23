@@ -1,1 +1,66 @@
-Expense Modal
+<!-------------Header------------->
+<ion-header>
+  <ion-toolbar>
+    <!-- Cancel Button -->
+    <ion-buttons slot="start">
+      <ion-button color="medium" (click)="cancel()">
+        <ion-icon slot="start" name="close" />
+        Cancel
+      </ion-button>
+    </ion-buttons>
+
+    <!-- Title -->
+    <ion-title>Add Expense</ion-title>
+
+    <!-- Save Button -->
+    <ion-buttons slot="end">
+      <ion-button color="medium" (click)="save()">
+        <ion-icon slot="start" name="save"/>
+        Save
+      </ion-button>
+    </ion-buttons>
+  </ion-toolbar>
+</ion-header>
+
+<!-------------Content------------->
+<ion-content class="ion-padding">
+  <!-- Input Name-->
+  <ion-item>
+    <ion-icon name="text" slot="start" />
+    <ion-input #nameInput maxlength="40" placeholder="Name" required="true"/>
+  </ion-item>
+  <!-- Choose Category-->
+  <ion-item [button]="true">
+    <ion-icon name="pricetag" slot="start" />
+    <ion-select interface="popover" placeholder="Category">
+      <ion-select-option>Auswärts Essen</ion-select-option>
+      <ion-select-option>Brötchen</ion-select-option>
+      <ion-select-option>Ferien</ion-select-option>
+      <ion-select-option>Freizeit</ion-select-option>
+      <ion-select-option>Hobby</ion-select-option>
+      <ion-select-option>Lebensmittel</ion-select-option>
+    </ion-select>
+    <ion-button>
+      <ion-icon name="add"/>
+    </ion-button>
+  </ion-item>
+  <!-- Input amount-->
+  <ion-item>
+    <ion-icon name="cash" slot="start"/>
+    <ion-input type="number" placeholder="Amount"/>
+    <ion-label/>
+    <ion-note slot="end">CHF</ion-note>
+  </ion-item>
+  <!-- Set date-->
+  <ion-item>
+    <ion-icon name="calendar" slot="start"/>
+    <ion-datetime-button datetime="date"></ion-datetime-button>
+    <ion-modal [keepContentsMounted]="true">
+      <ng-template>
+        <ion-datetime id="date" presentation="date" [showDefaultButtons]="true">
+          <span slot="title">Enter the date of the expense</span>
+        </ion-datetime>
+      </ng-template>
+    </ion-modal>
+  </ion-item>
+</ion-content>
