@@ -1,6 +1,9 @@
 <!-------------Header------------->
 <ion-header>
   <ion-toolbar>
+    @if (loading) {
+      <ion-progress-bar type="indeterminate" />
+    }
     <ion-buttons slot="start">
       <ion-menu-button/>
     </ion-buttons>
@@ -10,6 +13,17 @@
 
 <!-------------Content------------->
 <ion-content>
+
+  <!-- Infinite Scroll -->
+  <ion-infinite-scroll [disabled]="lastPageReached || loading" (ionInfinite)="loadNextExpensePage($event)">
+    <ion-infinite-scroll-content />
+  </ion-infinite-scroll>
+
+  <!-- Refresher -->
+  <ion-refresher slot="fixed" (ionRefresh)="reloadExpenses($event)" [disabled]="loading">
+    <ion-refresher-content />
+  </ion-refresher>
+
   <ion-grid class="ion-padding">
     <!-- Sort, Filter & Search -->
     <ion-row>
@@ -49,12 +63,35 @@
     <!-- Expense List -->
     <ion-row>
       <ion-col>
-        <ion-list>
-          <ion-item>
-            <ion-icon name="alert-circle-outline" slot="start"/>
-            <ion-label> No expenses found </ion-label>
-          </ion-item>
-        </ion-list>
+        @switch (expenses?.length) {
+          <!-- Skeleton -->
+          @case (null) {
+            @for (i of [0, 1, 2, 3, 4, 5, 6, 7, 8, 9]; track i) {
+              <ion-item>
+                <ion-label>
+                  <ion-skeleton-text [animated]="true" style="width: 80px" />
+                </ion-label>
+              </ion-item>
+            }
+          }
+
+          <!-- Empty List -->
+          @case (0) {
+            <ion-item>
+              <ion-icon slot="start" name="alert-circle-outline" />
+              <ion-label> No expenses found </ion-label>
+            </ion-item>
+          }
+
+          <!-- Categories -->
+          @default {
+            @for (expense of expenses; track expense.id) {
+              <ion-item button="true" [detail]="true" (click)="openExpenseModal(expense)">
+                <ion-label> {{ expense.name }} </ion-label>
+              </ion-item>
+            }
+          }
+        }
       </ion-col>
     </ion-row>
   </ion-grid>
@@ -76,7 +113,7 @@
       </ion-button>
     </ion-buttons>
     <ion-title class="ion-padding">{{ date | date: "MMMM yyyy" }}</ion-title>
-      <ion-buttons slot="end">
+    <ion-buttons slot="end">
       <ion-button (click)="addMonths(1)">
         <ion-icon name="arrow-forward"></ion-icon>
       </ion-button>
