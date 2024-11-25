@@ -40,8 +40,14 @@ import ExpenseModalComponent from '../../component/expense-modal/expense-modal.c
 import { ToastService } from '../../../shared/service/toast.service';
 import { Expense, ExpenseCriteria } from '../../../shared/domain';
 import { ExpenseService } from '../../service/expense.service';
-import { finalize } from 'rxjs';
+import { finalize, from, groupBy, mergeMap, toArray } from 'rxjs';
 import { InfiniteScrollCustomEvent, RefresherCustomEvent } from '@ionic/angular';
+import { formatPeriod } from '../../../shared/period';
+
+interface ExpenseGroup {
+  date: string;
+  expenses: Expense[];
+}
 
 @Component({
   selector: 'app-expense-list',
@@ -97,6 +103,8 @@ export default class ExpenseListComponent implements ViewDidEnter {
 
   date = set(new Date(), { date: 1 });
 
+  expenseGroups: ExpenseGroup[] | null = null;
+
   constructor() {
     // Add all used Ionic icons
     addIcons({ swapVertical, pricetag, search, alertCircleOutline, add, arrowBack, arrowForward });
@@ -106,26 +114,41 @@ export default class ExpenseListComponent implements ViewDidEnter {
     this.loadExpenses();
   }
 
-  private loadExpenses(next?: () => void): void {
+  private loadExpenses(next: () => void = () => {}): void {
+    this.searchCriteria.yearMonth = formatPeriod(this.date);
+    if (!this.searchCriteria.categoryIds?.length) delete this.searchCriteria.categoryIds;
     if (!this.searchCriteria.name) delete this.searchCriteria.name;
     this.loading = true;
+    const groupByDate = this.searchCriteria.sort.startsWith('date');
     this.expenseService
       .getExpenses(this.searchCriteria)
       .pipe(
-        finalize(() => {
-          this.loading = false;
-          if (next) next();
+        finalize(() => (this.loading = false)),
+        mergeMap(expensePage => {
+          this.lastPageReached = expensePage.last;
+          next();
+          if (this.searchCriteria.page === 0 || !this.expenseGroups) this.expenseGroups = [];
+          return from(expensePage.content).pipe(
+            groupBy(expense => (groupByDate ? expense.date : expense.id)),
+            mergeMap(group => group.pipe(toArray()))
+          );
         })
       )
       .subscribe({
-        next: expenses => {
-          if (this.searchCriteria.page === 0 || !this.expenses) this.expenses = [];
-          this.expenses.push(...expenses.content);
-          this.lastPageReached = expenses.last;
+        next: (expenses: Expense[]) => {
+          const expenseGroup: ExpenseGroup = {
+            date: expenses[0].date,
+            expenses: this.sortExpenses(expenses)
+          };
+          const expenseGroupWithSameDate = this.expenseGroups!.find(other => other.date === expenseGroup.date);
+          if (!expenseGroupWithSameDate || !groupByDate) this.expenseGroups!.push(expenseGroup);
+          else expenseGroupWithSameDate.expenses = this.sortExpenses([...expenseGroupWithSameDate.expenses, ...expenseGroup.expenses]);
         },
         error: error => this.toastService.displayWarningToast('Could not load expenses', error)
       });
   }
+
+  private sortExpenses = (expenses: Expense[]): Expense[] => expenses.sort((a, b) => a.name.localeCompare(b.name));
 
   async openExpenseModal(expense?: Expense) {
     const modal = await this.modalCtrl.create({
