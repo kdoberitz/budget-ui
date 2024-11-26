@@ -30,10 +30,11 @@ import { ExpenseService } from '../../service/expense.service';
 import { LoadingIndicatorService } from '../../../shared/service/loading-indicator.service';
 import { ToastService } from '../../../shared/service/toast.service';
 import { Category, Expense, ExpenseUpsertDto } from '../../../shared/domain';
-import { finalize } from 'rxjs';
+import { finalize, mergeMap } from 'rxjs';
 import CategoryModalComponent from '../../../category/component/category-modal/category-modal.component';
 import { formatISO, parseISO } from 'date-fns';
 import { CategoryService } from '../../../category/service/category.service';
+import { ActionSheetService } from '../../../shared/service/action-sheet.service';
 // import { ActionSheetService } from '../../../shared/service/action-sheet.service';
 
 @Component({
@@ -73,7 +74,7 @@ export default class ExpenseModalComponent implements ViewWillEnter, ViewDidEnte
   private readonly loadingIndicatorService = inject(LoadingIndicatorService);
   private readonly modalCtrl = inject(ModalController);
   private readonly toastService = inject(ToastService);
-  // private readonly actionSheetService = inject(ActionSheetService);
+  private readonly actionSheetService = inject(ActionSheetService);
 
   readonly expenseForm = this.formBuilder.group({
     id: [null! as string],
@@ -119,7 +120,21 @@ export default class ExpenseModalComponent implements ViewWillEnter, ViewDidEnte
   }
 
   delete(): void {
-    this.modalCtrl.dismiss(null, 'delete');
+    this.actionSheetService
+      .showDeletionConfirmation('Are you sure you want to delete this expense?')
+      .pipe(mergeMap(() => this.loadingIndicatorService.showLoadingIndicator({ message: 'Deleting expense' })))
+      .subscribe(loadingIndicator => {
+        this.expenseService
+          .deleteExpense(this.expense.id!)
+          .pipe(finalize(() => loadingIndicator.dismiss()))
+          .subscribe({
+            next: () => {
+              this.toastService.displaySuccessToast('Expense deleted');
+              this.modalCtrl.dismiss(null, 'refresh');
+            },
+            error: error => this.toastService.displayWarningToast('Could not delete expense', error)
+          });
+      });
   }
 
   async showCategoryModal(): Promise<void> {
@@ -139,6 +154,7 @@ export default class ExpenseModalComponent implements ViewWillEnter, ViewDidEnte
 
   ionViewWillEnter(): void {
     this.loadAllCategories();
+    this.expenseForm.patchValue(this.expense);
   }
 
   ionViewDidEnter(): void {

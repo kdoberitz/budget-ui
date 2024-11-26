@@ -10,7 +10,7 @@
     </ion-buttons>
 
     <!-- Title -->
-    <ion-title>Add Expense</ion-title>
+    <ion-title>{{expense.id ? 'Edit' : 'Add'}} expense</ion-title>
 
     <!-- Save Button -->
     <ion-buttons slot="end">
@@ -29,6 +29,7 @@
     <ion-icon name="text" slot="start" />
     <ion-input #nameInput formControlName="name" maxlength="40" placeholder="Name" required="true"/>
   </ion-item>
+
   <!-- Choose Category-->
   <ion-item>
     <ion-icon name="pricetag" slot="start" />
@@ -43,6 +44,7 @@
       <ion-icon name="add"/>
     </ion-button>
   </ion-item>
+
   <!-- Input amount-->
   <ion-item>
     <ion-icon name="cash" slot="start"/>
@@ -50,6 +52,7 @@
     <ion-label/>
     <ion-note slot="end">CHF</ion-note>
   </ion-item>
+
   <!-- Set date-->
   <ion-item>
     <ion-icon name="calendar" slot="start"/>
@@ -62,4 +65,11 @@
       </ng-template>
     </ion-modal>
   </ion-item>
+
+  <!-- Delete Button -->
+  <ion-fab slot="fixed" vertical="bottom" horizontal="end">
+    <ion-fab-button (click)="delete()" color="danger">
+      <ion-icon name="trash" />
+    </ion-fab-button>
+  </ion-fab>
 </ion-content>
