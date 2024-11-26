@@ -30,19 +30,21 @@ import {
   IonTitle,
   IonToolbar,
   ModalController,
-  ViewDidEnter
+  ViewDidEnter,
+  ViewDidLeave
 } from '@ionic/angular/standalone';
-import { ReactiveFormsModule } from '@angular/forms';
+import { NonNullableFormBuilder, ReactiveFormsModule } from '@angular/forms';
 import { addIcons } from 'ionicons';
 import { add, alertCircleOutline, arrowBack, arrowForward, pricetag, search, swapVertical } from 'ionicons/icons';
 import { CurrencyPipe, DatePipe } from '@angular/common';
 import ExpenseModalComponent from '../../component/expense-modal/expense-modal.component';
 import { ToastService } from '../../../shared/service/toast.service';
-import { Expense, ExpenseCriteria } from '../../../shared/domain';
+import { Category, Expense, ExpenseCriteria, SortOption } from '../../../shared/domain';
 import { ExpenseService } from '../../service/expense.service';
-import { finalize, from, groupBy, mergeMap, toArray } from 'rxjs';
+import { debounce, finalize, from, groupBy, interval, mergeMap, Subscription, toArray } from 'rxjs';
 import { InfiniteScrollCustomEvent, RefresherCustomEvent } from '@ionic/angular';
 import { formatPeriod } from '../../../shared/period';
+import { CategoryService } from '../../../category/service/category.service';
 
 interface ExpenseGroup {
   date: string;
@@ -89,14 +91,17 @@ interface ExpenseGroup {
     IonButton
   ]
 })
-export default class ExpenseListComponent implements ViewDidEnter {
+export default class ExpenseListComponent implements ViewDidEnter, ViewDidLeave {
   // DI
   private readonly expenseService = inject(ExpenseService);
+  private readonly categoryService = inject(CategoryService);
   private readonly modalCtrl = inject(ModalController);
   private readonly toastService = inject(ToastService);
+  private readonly formBuilder = inject(NonNullableFormBuilder);
 
+  categories: Category[] | null = null;
   expenses: Expense[] | null = null;
-  readonly initialSort = 'name,asc';
+  readonly initialSort = 'date';
   lastPageReached = false;
   loading = false;
   searchCriteria: ExpenseCriteria = { page: 0, size: 25, sort: this.initialSort };
@@ -105,6 +110,18 @@ export default class ExpenseListComponent implements ViewDidEnter {
 
   expenseGroups: ExpenseGroup[] | null = null;
 
+  private searchFormSubscription?: Subscription;
+  readonly sortOptions: SortOption[] = [
+    { label: 'Created at (newest first)', value: 'createdAt,desc' },
+    { label: 'Created at (oldest first)', value: 'createdAt,asc' },
+    { label: 'Date (oldest first)', value: 'date,asc' },
+    { label: 'Date (newest first', value: 'date,desc' },
+    { label: 'Name (A-Z)', value: 'name,asc' },
+    { label: 'Name (Z-A)', value: 'name,desc' }
+  ];
+
+  readonly searchForm = this.formBuilder.group({ name: [''], sort: [this.initialSort], categoryIds: [[]] });
+
   constructor() {
     // Add all used Ionic icons
     addIcons({ swapVertical, pricetag, search, alertCircleOutline, add, arrowBack, arrowForward });
@@ -112,6 +129,18 @@ export default class ExpenseListComponent implements ViewDidEnter {
 
   ionViewDidEnter(): void {
     this.loadExpenses();
+    this.loadAllCategories();
+    this.searchFormSubscription = this.searchForm.valueChanges
+      .pipe(debounce(searchParams => interval(searchParams.name?.length ? 400 : 0)))
+      .subscribe(searchParams => {
+        this.searchCriteria = { ...this.searchCriteria, ...searchParams, page: 0 };
+        this.loadExpenses();
+      });
+  }
+
+  ionViewDidLeave(): void {
+    this.searchFormSubscription?.unsubscribe();
+    this.searchFormSubscription = undefined;
   }
 
   private loadExpenses(next: () => void = () => {}): void {
@@ -146,6 +175,13 @@ export default class ExpenseListComponent implements ViewDidEnter {
         },
         error: error => this.toastService.displayWarningToast('Could not load expenses', error)
       });
+  }
+
+  private loadAllCategories(): void {
+    this.categoryService.getAllCategories({ sort: 'name,asc' }).subscribe({
+      next: categories => (this.categories = categories),
+      error: error => this.toastService.displayWarningToast('Could not load categories', error)
+    });
   }
 
   private sortExpenses = (expenses: Expense[]): Expense[] => expenses.sort((a, b) => a.name.localeCompare(b.name));
